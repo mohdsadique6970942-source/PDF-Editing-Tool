@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Mania — Classic PDF Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EAE4D4;
+    --parchment: #DDD5C0;
+    --ink: #1C1713;
+    --ink-light: #3D3629;
+    --ink-faded: #7A6F5E;
+    --gold: #B8962E;
+    --gold-light: #D4B04A;
+    --gold-pale: #F0E6C8;
+    --red-wax: #8B2635;
+    --border: #C4B89A;
+    --shadow: rgba(28,23,19,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'EB Garamond', Georgia, serif;
+    background-color: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,165,130,0.12) 28px),
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--ink);
+    border-bottom: 3px double var(--gold);
+    padding: 0 2.5rem;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 68px;
+  }
+  .logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.75rem; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--gold-light);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-seal {
+    width: 40px; height: 40px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: var(--gold);
+    font-weight: 700;
+  }
+  .logo span.mania { color: var(--red-wax); font-style: italic; }
+  .tagline {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--parchment);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Main layout ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center; padding: 3rem 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+  .hero::before, .hero::after {
+    content: '✦';
+    font-size: 1rem; color: var(--gold);
+    position: absolute; top: 50%;
+  }
+  .hero::before { left: 0; }
+  .hero::after { right: 0; }
+  .hero h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.8rem; font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 0.6rem;
+  }
+  .hero h1 em { color: var(--gold); font-style: italic; }
+  .hero p {
+    font-size: 1.1rem; color: var(--ink-faded);
+    font-style: italic; letter-spacing: 0.02em;
+  }
+
+  /* ── Tool tabs ── */
+  .tools-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-faded);
+    text-align: center; margin-bottom: 1.4rem;
+  }
+  .tools-label::before, .tools-label::after { content: ' ── '; color: var(--gold); }
+
+  .tool-tabs {
+    display: flex; flex-wrap: wrap; gap: 0.6rem;
+    justify-content: center; margin-bottom: 2.5rem;
+  }
+  .tab-btn {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.95rem; letter-spacing: 0.04em;
+    padding: 0.5rem 1.3rem;
+    border: 1px solid var(--border);
+    background: var(--cream-dark);
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0% 50%);
+  }
+  .tab-btn:hover { background: var(--gold-pale); border-color: var(--gold); color: var(--ink); }
+  .tab-btn.active { background: var(--ink); border-color: var(--ink); color: var(--gold-light); font-weight: 500; }
+
+  /* ── Panel ── */
+  .panel {
+    background: #FFFDF7;
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    box-shadow: 4px 4px 0 var(--parchment), 8px 8px 0 rgba(180,165,130,0.3);
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    display: none;
+  }
+  .panel.active { display: block; }
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 600; color: var(--ink);
+    margin-bottom: 0.3rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title .icon { font-size: 1.2rem; }
+  .panel-desc {
+    font-style: italic; color: var(--ink-faded);
+    font-size: 0.95rem; margin-bottom: 1.8rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+
+  /* ── Drop zone ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    background: var(--cream);
+    padding: 2.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--gold); background: var(--gold-pale); }
+  .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .dropzone .dz-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+  .dropzone .dz-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink-light); margin-bottom: 0.3rem; }
+  .dropzone .dz-sub { font-size: 0.85rem; color: var(--ink-faded); font-style: italic; }
+
+  /* ── Form controls ── */
+  label {
+    display: block;
+    font-size: 0.85rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-faded); margin-bottom: 0.4rem;
+  }
+  input[type=text], input[type=number], select, textarea {
+    font-family: 'EB Garamond', serif;
+    font-size: 1rem; width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--cream); color: var(--ink);
+    outline: none; transition: border-color 0.15s;
+    margin-bottom: 1.2rem;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 100px; }
+  input[type=color] { width: 48px; height: 36px; padding: 2px; border: 1px solid var(--border); background: var(--cream); cursor: pointer; margin-bottom: 1.2rem; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; }
+  input[type=range] { width: 100%; accent-color: var(--gold); margin-bottom: 0.3rem; }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; letter-spacing: 0.08em;
+    padding: 0.75rem 2.5rem;
+    background: var(--ink); color: var(--gold-light);
+    border: 1px solid var(--ink);
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { background: var(--red-wax); border-color: var(--red-wax); color: #fff; }
+  .btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .btn-secondary {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.9rem; letter-spacing: 0.05em;
+    padding: 0.5rem 1.5rem;
+    background: transparent; color: var(--ink-light);
+    border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--ink); }
+  .btn-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  /* ── File list ── */
+  .file-list { margin-bottom: 1.5rem; }
+  .file-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--cream); margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+  .file-item .fname { font-family: 'Courier Prime', monospace; font-size: 0.82rem; color: var(--ink-light); }
+  .file-item .fsize { color: var(--ink-faded); font-size: 0.8rem; font-style: italic; }
+  .file-item .remove-btn { background: none; border: none; cursor: pointer; color: var(--red-wax); font-size: 1rem; font-weight: 700; padding: 2px 6px; }
+  .file-item .remove-btn:hover { opacity: 0.7; }
+
+  /* ── Status ── */
+  .status-box {
+    display: none; padding: 0.85rem 1.2rem;
+    border-left: 3px solid; font-size: 0.9rem;
+    margin-top: 1.2rem; font-style: italic;
+  }
+  .status-box.success { border-color: #4A7C59; background: #EEF6F1; color: #2C5C3A; }
+  .status-box.error   { border-color: var(--red-wax); background: #FDF0F2; color: var(--red-wax); }
+  .status-box.loading { border-color: var(--gold); background: var(--gold-pale); color: var(--ink); }
+  .status-box.show { display: block; }
+
+  /* ── Preview ── */
+  .preview-area {
+    margin-top: 1.5rem; border: 1px solid var(--border);
+    background: var(--cream-dark); padding: 1rem;
+    text-align: center; display: none;
+    max-height: 420px; overflow-y: auto;
+  }
+  .preview-area canvas { max-width: 100%; box-shadow: 0 2px 8px var(--shadow); }
+  .preview-label { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faded); margin-bottom: 0.75rem; }
+
+  /* ── Radio cards ── */
+  .split-mode-row { display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .radio-card {
+    flex: 1; min-width: 140px;
+    border: 1px solid var(--border);
+    padding: 0.8rem 1rem;
+    cursor: pointer; transition: all 0.15s;
+    background: var(--cream);
+  }
+  .radio-card:has(input:checked) { border-color: var(--gold); background: var(--gold-pale); }
+  .radio-card input { margin-right: 6px; accent-color: var(--gold); }
+  .radio-card span { font-size: 0.9rem; }
+
+  /* ── Create PDF specific ── */
+  .page-builder { border: 1px solid var(--border); background: var(--cream); margin-bottom: 1.2rem; }
+  .page-item {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.2rem;
+    display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .page-item:last-child { border-bottom: none; }
+  .page-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.75rem; font-weight: 700;
+    color: var(--gold); letter-spacing: 0.1em;
+    text-transform: uppercase; padding-top: 0.5rem;
+    min-width: 52px;
+  }
+  .page-content { flex: 1; }
+  .page-content textarea { margin-bottom: 0.6rem; min-height: 70px; }
+  .page-tools { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .page-tools select, .page-tools input[type=number] { width: auto; margin-bottom: 0; }
+  .remove-page-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--red-wax); cursor: pointer; font-size: 0.85rem;
+    padding: 0.3rem 0.7rem; transition: all 0.15s;
+  }
+  .remove-page-btn:hover { background: var(--red-wax); color: #fff; border-color: var(--red-wax); }
+  .add-page-btn {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.9rem; letter-spacing: 0.05em;
+    padding: 0.6rem 1.5rem;
+    background: transparent; color: var(--ink-light);
+    border: 1px dashed var(--border);
+    cursor: pointer; transition: all 0.15s;
+    width: 100%; text-align: center;
+    margin-top: 0.5rem;
+  }
+  .add-page-btn:hover { border-color: var(--gold); color: var(--ink); background: var(--gold-pale); }
+
+  /* ── Remove pages specific ── */
+  .pages-grid {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin: 1rem 0 1.5rem; min-height: 50px;
+  }
+  .page-chip {
+    border: 1px solid var(--border);
+    background: var(--cream);
+    padding: 0.4rem 0.85rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem; color: var(--ink-light);
+    cursor: pointer; transition: all 0.15s;
+    user-select: none;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .page-chip:hover { border-color: var(--red-wax); background: #FDF0F2; color: var(--red-wax); }
+  .page-chip.selected { background: var(--red-wax); border-color: var(--red-wax); color: #fff; }
+  .pages-hint { font-size: 0.85rem; color: var(--ink-faded); font-style: italic; margin-bottom: 0.8rem; }
+
+  /* ── Ornament ── */
+  .ornament { text-align: center; color: var(--gold); font-size: 1rem; letter-spacing: 0.5rem; margin: 2rem 0 1.5rem; user-select: none; }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 3px double var(--border);
+    padding: 1.5rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-copy {
+    color: var(--ink-faded); font-style: italic;
+    font-size: 0.85rem; letter-spacing: 0.04em;
+  }
+  .footer-creator {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--ink-light); letter-spacing: 0.08em;
+    text-align: right;
+  }
+  .footer-creator span {
+    display: block; font-family: 'EB Garamond', serif;
+    font-size: 0.75rem; font-weight: 400; font-style: italic;
+    color: var(--ink-faded); letter-spacing: 0.04em; margin-bottom: 2px;
+  }
+
+  @media(max-width:640px){
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.9rem; }
+    .panel { padding: 1.2rem 1rem; }
+    header { padding: 0 1rem; }
+    .container { padding: 1.5rem 1rem 3rem; }
+    footer { flex-direction: column; text-align: center; }
+    .footer-creator { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-seal">P</div>
+      PDF <span class="mania">Mania</span>
+    </div>
+    <div class="tagline">The Classic PDF Workshop</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="hero">
+    <h1>Craft Your <em>Documents</em> with Precision</h1>
+    <p>A refined suite of PDF tools — built for those who care about their pages.</p>
+  </div>
+
+  <div class="tools-label">Choose your instrument</div>
+
+  <div class="tool-tabs">
+    <button class="tab-btn active"  onclick="switchTab('add-text',this)">✒ Add Text</button>
+    <button class="tab-btn"         onclick="switchTab('watermark',this)">🔏 Watermark</button>
+    <button class="tab-btn"         onclick="switchTab('compress',this)">🗜 Compress</button>
+    <button class="tab-btn"         onclick="switchTab('merge',this)">📎 Merge</button>
+    <button class="tab-btn"         onclick="switchTab('split',this)">✂ Split</button>
+    <button class="tab-btn"         onclick="switchTab('create',this)">📝 Create PDF</button>
+    <button class="tab-btn"         onclick="switchTab('remove-pages',this)">🗑 Remove Pages</button>
+  </div>
+
+  <!-- ══ ADD TEXT ══ -->
+  <div id="panel-add-text" class="panel active">
+    <div class="panel-title"><span class="icon">✒</span> Add Text to PDF</div>
+    <div class="panel-desc">Inscribe any text upon your document — choose placement, font size, and colour with classical precision.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-text').click()">
+      <input type="file" id="file-text" accept=".pdf" onchange="handleFile('text',this)">
+      <span class="dz-icon">📄</span>
+      <div class="dz-title">Drop your PDF here</div>
+      <div class="dz-sub">or click to browse your files</div>
+    </div>
+    <div class="file-list" id="fl-text"></div>
+
+    <div class="form-row">
+      <div>
+        <label>Text to add</label>
+        <input type="text" id="txt-content" placeholder="Enter your text…" value="Confidential">
+      </div>
+      <div>
+        <label>Colour</label>
+        <select id="txt-color">
+          <option value="black">Black</option>
+          <option value="red">Crimson Red</option>
+          <option value="navy">Navy Blue</option>
+          <option value="darkgreen">Forest Green</option>
+          <option value="brown">Sepia Brown</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div>
+        <label>Font size (pt)</label>
+        <input type="number" id="txt-size" value="16" min="6" max="120">
+      </div>
+      <div>
+        <label>X position (px)</label>
+        <input type="number" id="txt-x" value="50" min="0">
+      </div>
+      <div>
+        <label>Y position (px from bottom)</label>
+        <input type="number" id="txt-y" value="50" min="0">
+      </div>
+    </div>
+    <div>
+      <label>Apply to pages</label>
+      <select id="txt-pages">
+        <option value="all">All pages</option>
+        <option value="first">First page only</option>
+        <option value="last">Last page only</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="addText()">✒ Add Text &amp; Download</button>
+      <button class="btn-secondary" onclick="previewPDF('text')">Preview PDF</button>
+    </div>
+    <div class="status-box" id="st-text"></div>
+    <div class="preview-area" id="prev-text">
+      <div class="preview-label">Document Preview — Page 1</div>
+      <canvas id="canvas-text"></canvas>
+    </div>
+  </div>
+
+  <!-- ══ WATERMARK ══ -->
+  <div id="panel-watermark" class="panel">
+    <div class="panel-title"><span class="icon">🔏</span> Apply Watermark</div>
+    <div class="panel-desc">Impress your seal upon every page — protect your work with a dignified watermark.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-wm').click()">
+      <input type="file" id="file-wm" accept=".pdf" onchange="handleFile('wm',this)">
+      <span class="dz-icon">📄</span>
+      <div class="dz-title">Drop your PDF here</div>
+      <div class="dz-sub">or click to browse</div>
+    </div>
+    <div class="file-list" id="fl-wm"></div>
+
+    <div class="form-row">
+      <div>
+        <label>Watermark text</label>
+        <input type="text" id="wm-text" placeholder="e.g. DRAFT, CONFIDENTIAL…" value="DRAFT">
+      </div>
+      <div>
+        <label>Opacity (%)</label>
+        <input type="range" id="wm-opacity" min="5" max="80" value="25" oninput="document.getElementById('wm-op-val').textContent=this.value+'%'">
+        <span id="wm-op-val" style="font-size:0.85rem;color:var(--ink-faded);">25%</span>
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div>
+        <label>Font size (pt)</label>
+        <input type="number" id="wm-size" value="60" min="10" max="200">
+      </div>
+      <div>
+        <label>Rotation (°)</label>
+        <input type="number" id="wm-angle" value="45" min="-180" max="180">
+      </div>
+      <div>
+        <label>Colour</label>
+        <select id="wm-color">
+          <option value="gray">Stone Grey</option>
+          <option value="red">Crimson</option>
+          <option value="navy">Navy</option>
+          <option value="black">Ink Black</option>
+          <option value="gold">Antique Gold</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="applyWatermark()">🔏 Apply &amp; Download</button>
+    </div>
+    <div class="status-box" id="st-wm"></div>
+  </div>
+
+  <!-- ══ COMPRESS ══ -->
+  <div id="panel-compress" class="panel">
+    <div class="panel-title"><span class="icon">🗜</span> Compress PDF</div>
+    <div class="panel-desc">Reduce the weight of your document without sacrificing its substance.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-comp').click()">
+      <input type="file" id="file-comp" accept=".pdf" onchange="handleFile('comp',this)">
+      <span class="dz-icon">📄</span>
+      <div class="dz-title">Drop your PDF here</div>
+      <div class="dz-sub">or click to browse</div>
+    </div>
+    <div class="file-list" id="fl-comp"></div>
+
+    <label>Compression level</label>
+    <div class="split-mode-row">
+      <label class="radio-card"><input type="radio" name="comp-level" value="light"> <span>Light — strip metadata only</span></label>
+      <label class="radio-card"><input type="radio" name="comp-level" value="medium" checked> <span>Standard — remove unused objects</span></label>
+      <label class="radio-card"><input type="radio" name="comp-level" value="heavy"> <span>Aggressive — flatten &amp; rebuild</span></label>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="compressPDF()">🗜 Compress &amp; Download</button>
+    </div>
+    <div class="status-box" id="st-comp"></div>
+  </div>
+
+  <!-- ══ MERGE ══ -->
+  <div id="panel-merge" class="panel">
+    <div class="panel-title"><span class="icon">📎</span> Merge PDFs</div>
+    <div class="panel-desc">Bind several documents into one coherent volume — arrange the order as you see fit.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-merge').click()">
+      <input type="file" id="file-merge" accept=".pdf" multiple onchange="handleFile('merge',this)">
+      <span class="dz-icon">📚</span>
+      <div class="dz-title">Drop multiple PDFs here</div>
+      <div class="dz-sub">Select two or more PDF files to merge</div>
+    </div>
+    <div class="file-list" id="fl-merge"></div>
+    <div style="font-size:0.82rem;color:var(--ink-faded);font-style:italic;margin-bottom:1rem;">Files will be merged in the order listed above.</div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="mergePDFs()">📎 Merge &amp; Download</button>
+    </div>
+    <div class="status-box" id="st-merge"></div>
+  </div>
+
+  <!-- ══ SPLIT ══ -->
+  <div id="panel-split" class="panel">
+    <div class="panel-title"><span class="icon">✂</span> Split PDF</div>
+    <div class="panel-desc">Divide your document into separate leaves — extract pages or cleave it at a chosen point.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-split').click()">
+      <input type="file" id="file-split" accept=".pdf" onchange="handleFile('split',this)">
+      <span class="dz-icon">📄</span>
+      <div class="dz-title">Drop your PDF here</div>
+      <div class="dz-sub">or click to browse</div>
+    </div>
+    <div class="file-list" id="fl-split"></div>
+
+    <label>Split method</label>
+    <div class="split-mode-row">
+      <label class="radio-card"><input type="radio" name="split-mode" value="range" checked onchange="toggleSplitMode()"> <span>Extract page range</span></label>
+      <label class="radio-card"><input type="radio" name="split-mode" value="every" onchange="toggleSplitMode()"> <span>Every N pages</span></label>
+      <label class="radio-card"><input type="radio" name="split-mode" value="all" onchange="toggleSplitMode()"> <span>Each page separately</span></label>
+    </div>
+    <div id="split-range-opts">
+      <div class="form-row">
+        <div><label>From page</label><input type="number" id="split-from" value="1" min="1"></div>
+        <div><label>To page</label><input type="number" id="split-to" value="3" min="1"></div>
+      </div>
+    </div>
+    <div id="split-every-opts" style="display:none;">
+      <label>Pages per chunk</label>
+      <input type="number" id="split-n" value="2" min="1" style="max-width:180px;">
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="splitPDF()">✂ Split &amp; Download</button>
+    </div>
+    <div class="status-box" id="st-split"></div>
+  </div>
+
+  <!-- ══ CREATE PDF ══ -->
+  <div id="panel-create" class="panel">
+    <div class="panel-title"><span class="icon">📝</span> Create PDF</div>
+    <div class="panel-desc">Compose a new PDF from scratch — write the content for each page, choose fonts and sizes, then download the finished document.</div>
+
+    <div>
+      <label>Document title (optional)</label>
+      <input type="text" id="create-title" placeholder="My Document">
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Page size</label>
+        <select id="create-pagesize">
+          <option value="A4">A4 (595 × 842 pt)</option>
+          <option value="Letter">US Letter (612 × 792 pt)</option>
+          <option value="A5">A5 (420 × 595 pt)</option>
+          <option value="Legal">Legal (612 × 1008 pt)</option>
+        </select>
+      </div>
+      <div>
+        <label>Default font size (pt)</label>
+        <input type="number" id="create-fontsize" value="14" min="6" max="72">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Text colour</label>
+        <select id="create-color">
+          <option value="black">Black</option>
+          <option value="navy">Navy Blue</option>
+          <option value="darkgreen">Forest Green</option>
+          <option value="red">Crimson Red</option>
+          <option value="brown">Sepia Brown</option>
+        </select>
+      </div>
+      <div>
+        <label>Margin (pt each side)</label>
+        <input type="number" id="create-margin" value="50" min="10" max="150">
+      </div>
+    </div>
+
+    <label>Pages</label>
+    <div class="page-builder" id="page-builder">
+      <div class="page-item" data-idx="0">
+        <div class="page-num">Page 1</div>
+        <div class="page-content">
+          <textarea placeholder="Type the content for this page…">Welcome to PDF Mania!
+
+This is your first page. You can write anything here.</textarea>
+        </div>
+        <button class="remove-page-btn" onclick="removePage(this)" title="Remove page">✕</button>
+      </div>
+    </div>
+    <button class="add-page-btn" onclick="addPage()">+ Add another page</button>
+
+    <div class="btn-row" style="margin-top:1.5rem;">
+      <button class="btn-primary" onclick="createPDF()">📝 Create &amp; Download PDF</button>
+    </div>
+    <div class="status-box" id="st-create"></div>
+  </div>
+
+  <!-- ══ REMOVE PAGES ══ -->
+  <div id="panel-remove-pages" class="panel">
+    <div class="panel-title"><span class="icon">🗑</span> Remove Pages</div>
+    <div class="panel-desc">Upload a PDF, select the pages you wish to excise, and download the trimmed document.</div>
+
+    <div class="dropzone" onclick="document.getElementById('file-rmpg').click()">
+      <input type="file" id="file-rmpg" accept=".pdf" onchange="handleFile('rmpg',this); loadPageChips()">
+      <span class="dz-icon">📄</span>
+      <div class="dz-title">Drop your PDF here</div>
+      <div class="dz-sub">or click to browse</div>
+    </div>
+    <div class="file-list" id="fl-rmpg"></div>
+
+    <div id="rmpg-selector" style="display:none;">
+      <p class="pages-hint">Click pages to mark them for removal (highlighted in red). Then press Remove &amp; Download.</p>
+      <div class="pages-grid" id="pages-grid"></div>
+      <div style="font-size:0.82rem;color:var(--ink-faded);font-style:italic;" id="rmpg-count">No pages selected for removal.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="removePages()" id="btn-rmpg" disabled>🗑 Remove &amp; Download</button>
+      <button class="btn-secondary" onclick="clearPageSelection()" id="btn-clear-rmpg">Clear selection</button>
+    </div>
+    <div class="status-box" id="st-rmpg"></div>
+  </div>
+
+  <div class="ornament">✦ ✦ ✦</div>
+
+</main>
+
+<footer>
+  <div class="footer-copy">
+    PDF Mania &mdash; All processing performed locally in your browser. No files are uploaded.
+  </div>
+  <div class="footer-creator">
+    <span>Created by</span>
+    MOHAMMAD SADIQUE
+  </div>
+</footer>
+
+<script>
+// ── State ──
+const files = { text:null, wm:null, comp:null, merge:[], split:null, rmpg:null };
+let pageCount = 1;
+let selectedPagesForRemoval = new Set();
+
+// ── Tab switching ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── File handling ──
+function handleFile(key, input) {
+  if (key === 'merge') {
+    files.merge = Array.from(input.files);
+    renderFileList('merge', files.merge);
+  } else {
+    files[key] = input.files[0];
+    renderFileList(key, files[key] ? [files[key]] : []);
+  }
+}
+function renderFileList(key, arr) {
+  const el = document.getElementById('fl-'+key);
+  el.innerHTML = '';
+  arr.forEach((f, i) => {
+    const sz = (f.size/1024).toFixed(1)+'KB';
+    el.innerHTML += `<div class="file-item">
+      <span class="fname">${f.name}</span>
+      <span class="fsize">${sz}</span>
+      <button class="remove-btn" onclick="removeFile('${key}',${i})">✕</button>
+    </div>`;
+  });
+}
+function removeFile(key, i) {
+  if (key === 'merge') { files.merge.splice(i,1); renderFileList('merge', files.merge); }
+  else {
+    files[key] = null;
+    document.getElementById('fl-'+key).innerHTML='';
+    if (key==='rmpg') { document.getElementById('rmpg-selector').style.display='none'; selectedPagesForRemoval.clear(); }
+  }
+}
+
+function setStatus(key, type, msg) {
+  const el = document.getElementById('st-'+key);
+  el.className = 'status-box '+type+' show';
+  el.textContent = msg;
+}
+
+function colorToRgb(name) {
+  const map = {
+    black:[0,0,0], red:[0.6,0.1,0.1], navy:[0.1,0.1,0.5],
+    darkgreen:[0.1,0.35,0.1], brown:[0.45,0.25,0.1],
+    gray:[0.55,0.55,0.55], gold:[0.72,0.56,0.18]
+  };
+  return map[name] || [0,0,0];
+}
+
+// ── PDF Preview ──
+async function previewPDF(key) {
+  const f = files[key];
+  if (!f) { setStatus(key,'error','Please select a PDF first.'); return; }
+  const ab = await f.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const page = await pdf.getPage(1);
+  const vp = page.getViewport({scale:1.2});
+  const canvas = document.getElementById('canvas-'+key);
+  canvas.width = vp.width; canvas.height = vp.height;
+  await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
+  document.getElementById('prev-'+key).style.display='block';
+}
+
+// ── Add Text ──
+async function addText() {
+  const f = files.text;
+  if (!f) { setStatus('text','error','Please select a PDF file first.'); return; }
+  setStatus('text','loading','Adding text to your document…');
+  try {
+    const ab = await f.arrayBuffer();
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const doc = await PDFDocument.load(ab, {ignoreEncryption:true});
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const pages = doc.getPages();
+    const content = document.getElementById('txt-content').value || 'Text';
+    const size = parseInt(document.getElementById('txt-size').value)||16;
+    const x = parseInt(document.getElementById('txt-x').value)||50;
+    const y = parseInt(document.getElementById('txt-y').value)||50;
+    const [r,g,b] = colorToRgb(document.getElementById('txt-color').value);
+    const mode = document.getElementById('txt-pages').value;
+    const targets = mode==='all'?pages:mode==='first'?[pages[0]]:[pages[pages.length-1]];
+    targets.forEach(pg => pg.drawText(content, {x,y,size,font,color:rgb(r,g,b)}));
+    download(await doc.save(), 'text-added.pdf', 'application/pdf');
+    setStatus('text','success','Text added successfully — your file is downloading.');
+  } catch(e) { setStatus('text','error','Error: '+e.message); }
+}
+
+// ── Watermark ──
+async function applyWatermark() {
+  const f = files.wm;
+  if (!f) { setStatus('wm','error','Please select a PDF file first.'); return; }
+  setStatus('wm','loading','Applying watermark…');
+  try {
+    const ab = await f.arrayBuffer();
+    const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
+    const doc = await PDFDocument.load(ab, {ignoreEncryption:true});
+    const font = await doc.embedFont(StandardFonts.HelveticaBold);
+    const text = document.getElementById('wm-text').value || 'DRAFT';
+    const size = parseInt(document.getElementById('wm-size').value)||60;
+    const opacity = parseInt(document.getElementById('wm-opacity').value)/100;
+    const angle = parseInt(document.getElementById('wm-angle').value)||45;
+    const [r,g,b] = colorToRgb(document.getElementById('wm-color').value);
+    doc.getPages().forEach(pg => {
+      const {width,height} = pg.getSize();
+      pg.drawText(text, { x:width/2-(text.length*size*0.3), y:height/2, size, font, color:rgb(r,g,b), opacity, rotate:degrees(angle) });
+    });
+    download(await doc.save(), 'watermarked.pdf', 'application/pdf');
+    setStatus('wm','success','Watermark applied — your file is downloading.');
+  } catch(e) { setStatus('wm','error','Error: '+e.message); }
+}
+
+// ── Compress ──
+async function compressPDF() {
+  const f = files.comp;
+  if (!f) { setStatus('comp','error','Please select a PDF file first.'); return; }
+  setStatus('comp','loading','Compressing your document…');
+  try {
+    const ab = await f.arrayBuffer();
+    const { PDFDocument } = PDFLib;
+    const level = document.querySelector('input[name=comp-level]:checked').value;
+    const doc = await PDFDocument.load(ab, {ignoreEncryption:true});
+    doc.setTitle(''); doc.setAuthor(''); doc.setSubject(''); doc.setKeywords([]);
+    doc.setProducer('PDF Mania'); doc.setCreator('PDF Mania');
+    const saveOpts = {};
+    if (level==='medium'||level==='heavy') saveOpts.objectsPerTick = 50;
+    const bytes = await doc.save(saveOpts);
+    download(bytes, 'compressed.pdf', 'application/pdf');
+    setStatus('comp','success',`Compressed from ${(f.size/1024).toFixed(1)}KB to ${(bytes.byteLength/1024).toFixed(1)}KB — file downloading.`);
+  } catch(e) { setStatus('comp','error','Error: '+e.message); }
+}
+
+// ── Merge ──
+async function mergePDFs() {
+  if (files.merge.length < 2) { setStatus('merge','error','Please select at least two PDF files to merge.'); return; }
+  setStatus('merge','loading','Binding your documents together…');
+  try {
+    const { PDFDocument } = PDFLib;
+    const merged = await PDFDocument.create();
+    for (const f of files.merge) {
+      const ab = await f.arrayBuffer();
+      const doc = await PDFDocument.load(ab, {ignoreEncryption:true});
+      const pages = await merged.copyPages(doc, doc.getPageIndices());
+      pages.forEach(p => merged.addPage(p));
+    }
+    download(await merged.save(), 'merged.pdf', 'application/pdf');
+    setStatus('merge','success',`${files.merge.length} documents merged successfully — downloading.`);
+  } catch(e) { setStatus('merge','error','Error: '+e.message); }
+}
+
+// ── Split ──
+async function splitPDF() {
+  const f = files.split;
+  if (!f) { setStatus('split','error','Please select a PDF file first.'); return; }
+  setStatus('split','loading','Splitting your document…');
+  try {
+    const { PDFDocument } = PDFLib;
+    const src = await PDFDocument.load(await f.arrayBuffer(), {ignoreEncryption:true});
+    const total = src.getPageCount();
+    const mode = document.querySelector('input[name=split-mode]:checked').value;
+    if (mode==='range') {
+      let from = parseInt(document.getElementById('split-from').value)-1;
+      let to = parseInt(document.getElementById('split-to').value)-1;
+      if (from<0) from=0; if (to>=total) to=total-1;
+      if (from>to) { setStatus('split','error','From page must be ≤ To page.'); return; }
+      const out = await PDFDocument.create();
+      (await out.copyPages(src, Array.from({length:to-from+1},(_,i)=>from+i))).forEach(p=>out.addPage(p));
+      download(await out.save(), `pages_${from+1}-${to+1}.pdf`, 'application/pdf');
+      setStatus('split','success',`Pages ${from+1}–${to+1} extracted — file downloading.`);
+    } else if (mode==='every') {
+      const n = parseInt(document.getElementById('split-n').value)||1;
+      let chunk=0;
+      for (let i=0;i<total;i+=n) {
+        chunk++;
+        const out = await PDFDocument.create();
+        const end=Math.min(i+n,total);
+        (await out.copyPages(src, Array.from({length:end-i},(_,k)=>i+k))).forEach(p=>out.addPage(p));
+        download(await out.save(), `part_${chunk}.pdf`, 'application/pdf');
+        await new Promise(r=>setTimeout(r,300));
+      }
+      setStatus('split','success',`Document split into ${chunk} part(s) — files downloading.`);
+    } else {
+      for (let i=0;i<total;i++) {
+        const out = await PDFDocument.create();
+        const [pg] = await out.copyPages(src,[i]);
+        out.addPage(pg);
+        download(await out.save(), `page_${i+1}.pdf`, 'application/pdf');
+        await new Promise(r=>setTimeout(r,300));
+      }
+      setStatus('split','success',`${total} individual page files downloaded.`);
+    }
+  } catch(e) { setStatus('split','error','Error: '+e.message); }
+}
+
+// ── Split mode toggle ──
+function toggleSplitMode() {
+  const mode = document.querySelector('input[name=split-mode]:checked').value;
+  document.getElementById('split-range-opts').style.display = mode==='range'?'':'none';
+  document.getElementById('split-every-opts').style.display = mode==='every'?'':'none';
+}
+
+// ── Create PDF ──
+function addPage() {
+  pageCount++;
+  const builder = document.getElementById('page-builder');
+  const div = document.createElement('div');
+  div.className = 'page-item';
+  div.dataset.idx = pageCount-1;
+  div.innerHTML = `<div class="page-num">Page ${pageCount}</div>
+    <div class="page-content">
+      <textarea placeholder="Type the content for this page…"></textarea>
+    </div>
+    <button class="remove-page-btn" onclick="removePage(this)" title="Remove page">✕</button>`;
+  builder.appendChild(div);
+}
+function removePage(btn) {
+  const items = document.querySelectorAll('#page-builder .page-item');
+  if (items.length <= 1) { alert('A document must have at least one page.'); return; }
+  btn.closest('.page-item').remove();
+  document.querySelectorAll('#page-builder .page-item').forEach((el,i) => {
+    el.querySelector('.page-num').textContent = `Page ${i+1}`;
+  });
+  pageCount = document.querySelectorAll('#page-builder .page-item').length;
+}
+
+async function createPDF() {
+  setStatus('create','loading','Composing your document…');
+  try {
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const doc = await PDFDocument.create();
+    const title = document.getElementById('create-title').value || 'Document';
+    const fontSize = parseInt(document.getElementById('create-fontsize').value)||14;
+    const margin = parseInt(document.getElementById('create-margin').value)||50;
+    const [r,g,b] = colorToRgb(document.getElementById('create-color').value);
+    const pageSizeMap = { A4:[595,842], Letter:[612,792], A5:[420,595], Legal:[612,1008] };
+    const [pw,ph] = pageSizeMap[document.getElementById('create-pagesize').value] || [595,842];
+    const font = await doc.embedFont(StandardFonts.TimesRoman);
+    doc.setTitle(title); doc.setCreator('PDF Mania'); doc.setProducer('PDF Mania');
+
+    const items = document.querySelectorAll('#page-builder .page-item');
+    items.forEach(item => {
+      const text = item.querySelector('textarea').value || '';
+      const page = doc.addPage([pw, ph]);
+      const lineH = fontSize * 1.6;
+      const maxW = pw - margin*2;
+      const charsPerLine = Math.floor(maxW / (fontSize * 0.55));
+      // word-wrap
+      const words = text.split(/\n/);
+      let y = ph - margin;
+      words.forEach(para => {
+        if (para.trim()==='') { y -= lineH*0.7; return; }
+        const wds = para.split(' ');
+        let line = '';
+        wds.forEach(word => {
+          if ((line+word).length > charsPerLine) {
+            if (y < margin+lineH) { y = ph-margin; }
+            page.drawText(line.trim(), {x:margin, y, size:fontSize, font, color:rgb(r,g,b)});
+            y -= lineH; line = '';
+          }
+          line += word+' ';
+        });
+        if (line.trim()) {
+          if (y < margin+lineH) { y = ph-margin; }
+          page.drawText(line.trim(), {x:margin, y, size:fontSize, font, color:rgb(r,g,b)});
+          y -= lineH;
+        }
+      });
+    });
+
+    download(await doc.save(), (title||'document')+'.pdf', 'application/pdf');
+    setStatus('create','success','Your PDF has been created and is downloading.');
+  } catch(e) { setStatus('create','error','Error: '+e.message); }
+}
+
+// ── Remove Pages ──
+async function loadPageChips() {
+  const f = files.rmpg;
+  if (!f) return;
+  setStatus('rmpg','loading','Loading page information…');
+  try {
+    const ab = await f.arrayBuffer();
+    const { PDFDocument } = PDFLib;
+    const doc = await PDFDocument.load(ab, {ignoreEncryption:true});
+    const total = doc.getPageCount();
+    selectedPagesForRemoval.clear();
+    const grid = document.getElementById('pages-grid');
+    grid.innerHTML = '';
+    for (let i=1;i<=total;i++) {
+      const chip = document.createElement('div');
+      chip.className = 'page-chip';
+      chip.dataset.page = i;
+      chip.innerHTML = `<span>Page ${i}</span>`;
+      chip.onclick = () => togglePageChip(chip, i);
+      grid.appendChild(chip);
+    }
+    document.getElementById('rmpg-selector').style.display='block';
+    document.getElementById('btn-rmpg').disabled = false;
+    document.getElementById('st-rmpg').className = 'status-box';
+    updateRemoveCount();
+  } catch(e) { setStatus('rmpg','error','Could not read PDF: '+e.message); }
+}
+
+function togglePageChip(chip, pageNum) {
+  if (selectedPagesForRemoval.has(pageNum)) {
+    selectedPagesForRemoval.delete(pageNum);
+    chip.classList.remove('selected');
+  } else {
+    selectedPagesForRemoval.add(pageNum);
+    chip.classList.add('selected');
+  }
+  updateRemoveCount();
+}
+
+function updateRemoveCount() {
+  const n = selectedPagesForRemoval.size;
+  document.getElementById('rmpg-count').textContent =
+    n===0 ? 'No pages selected for removal.' : `${n} page${n>1?'s':''} selected for removal.`;
+}
+
+function clearPageSelection() {
+  selectedPagesForRemoval.clear();
+  document.querySelectorAll('#pages-grid .page-chip').forEach(c=>c.classList.remove('selected'));
+  updateRemoveCount();
+}
+
+async function removePages() {
+  const f = files.rmpg;
+  if (!f) { setStatus('rmpg','error','Please select a PDF file first.'); return; }
+  if (selectedPagesForRemoval.size===0) { setStatus('rmpg','error','Please select at least one page to remove.'); return; }
+  setStatus('rmpg','loading','Removing selected pages…');
+  try {
+    const { PDFDocument } = PDFLib;
+    const src = await PDFDocument.load(await f.arrayBuffer(), {ignoreEncryption:true});
+    const total = src.getPageCount();
+    if (selectedPagesForRemoval.size >= total) { setStatus('rmpg','error','Cannot remove all pages — at least one page must remain.'); return; }
+    const out = await PDFDocument.create();
+    const keepIndices = [];
+    for (let i=1;i<=total;i++) { if (!selectedPagesForRemoval.has(i)) keepIndices.push(i-1); }
+    const copied = await out.copyPages(src, keepIndices);
+    copied.forEach(p=>out.addPage(p));
+    download(await out.save(), 'pages-removed.pdf', 'application/pdf');
+    setStatus('rmpg','success',`${selectedPagesForRemoval.size} page(s) removed — ${keepIndices.length} pages remain. File downloading.`);
+    clearPageSelection();
+  } catch(e) { setStatus('rmpg','error','Error: '+e.message); }
+}
+
+// ── Download helper ──
+function download(bytes, name, mime) {
+  const blob = new Blob([bytes], {type:mime});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+
+// ── PDF.js worker ──
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+}
+
+// ── Drag & drop ──
+document.querySelectorAll('.dropzone').forEach(dz => {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const inp = dz.querySelector('input[type=file]');
+    if (inp && e.dataTransfer.files.length) {
+      const dt = new DataTransfer();
+      Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));
+      inp.files = dt.files;
+      inp.dispatchEvent(new Event('change'));
+    }
+  });
+});
+</script>
+</body>
+</html>
